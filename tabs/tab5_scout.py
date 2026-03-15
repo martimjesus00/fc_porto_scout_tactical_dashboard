@@ -254,17 +254,24 @@ def render(porto_players, scout_players):
     ps = ps.sort_values(["_ord", "player"]).reset_index(drop=True)
     ps_min = ps[ps["minutes"] >= 200] if "minutes" in ps.columns else ps
 
-    col_sel, col_filter = st.columns([3, 3])
+    col_sel, col_f1, col_f2 = st.columns([3, 2, 2])
     with col_sel:
         selected = st.selectbox("Jogador do Porto", ps_min["player"].tolist(), key="tab5s_player")
-    with col_filter:
-        min_min = st.slider("Minutos mínimos (scout)", 300, 1500, 500, 100, key="tab5s_min")
+    with col_f1:
+        min_min = st.slider("Minutos mínimos", 300, 1500, 500, 100, key="tab5s_min")
+    with col_f2:
+        age_min, age_max = int(scout_players["age"].min()), int(scout_players["age"].max())
+        age_range = st.slider("Idade", age_min, age_max, (age_min, age_max), key="tab5s_age")
 
     porto_row = ps_min[ps_min["player"] == selected].iloc[0]
     pos_group = _pos_group(porto_row.get("position_group", "Midfielder"))
     pos_key = _get_position_key(porto_row.get("position", ""), pos_group)
     config = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
-    scout_f = scout_players[scout_players["minutes"] >= min_min].copy()
+    scout_f = scout_players[
+        (scout_players["minutes"] >= min_min) &
+        (scout_players["age"] >= age_range[0]) &
+        (scout_players["age"] <= age_range[1])
+    ].copy()
 
     st.markdown(
         f'<p style="color:{MUTED};font-size:12px;margin-bottom:16px;">'
