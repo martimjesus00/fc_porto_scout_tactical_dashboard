@@ -10,7 +10,6 @@ GRID    = "#1e1e3a"
 MUTED   = "#8888aa"
 PORTO   = "#0033A0"
 
-# ── Métricas específicas por posição detalhada ────────────────
 POSITION_METRICS = {
     "GK": {
         "metrics": {"Save %": "save_pct", "Goals Prevented": "goals_prevented_p90",
@@ -154,22 +153,23 @@ def _percentile(value, series):
     return round((clean < value).mean() * 100)
 
 
-def _radar(player_row, group_df, pos_key, player_name):
+def _radar(player_row, ref_df, pos_key, player_name):
+    """Radar normalizado contra ref_df (scout pool da mesma posição)."""
     config = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
     metrics = config["metrics"]
     labels, player_vals, raw_player, raw_avg = [], [], [], []
 
     for label, col in metrics.items():
-        if col not in player_row.index or col not in group_df.columns:
+        if col not in player_row.index or col not in ref_df.columns:
             continue
         p_val = player_row[col]
-        col_series = group_df[col].dropna()
+        col_series = ref_df[col].dropna()
         if pd.isna(p_val) or len(col_series) == 0:
             continue
         mn, mx = col_series.min(), col_series.max()
-        norm_p = (p_val - mn) / (mx - mn) if mx > mn else 0.5
+        norm_p = float(np.clip((p_val - mn) / (mx - mn) if mx > mn else 0.5, 0, 1))
         labels.append(label)
-        player_vals.append(round(float(norm_p), 3))
+        player_vals.append(round(norm_p, 3))
         raw_player.append(round(float(p_val), 2))
         raw_avg.append(round(float(col_series.mean()), 2))
 
@@ -185,7 +185,7 @@ def _radar(player_row, group_df, pos_key, player_name):
         r=ac, theta=lc, fill="toself",
         fillcolor="rgba(255,255,255,0.05)",
         line=dict(color="rgba(255,255,255,0.3)", width=1.5, dash="dot"),
-        name="Média posição", hoverinfo="skip",
+        name="Média scout", hoverinfo="skip",
     ))
     fig.add_trace(go.Scatterpolar(
         r=pvc, theta=lc, fill="toself",
@@ -193,7 +193,7 @@ def _radar(player_row, group_df, pos_key, player_name):
         line=dict(color=PORTO, width=2.5),
         name=player_name,
         hovertemplate=[
-            f"<b>{l}</b><br>{player_name}: {rv}<br>Média: {ra}<extra></extra>"
+            f"<b>{l}</b><br>{player_name}: {rv}<br>Média scout: {ra}<extra></extra>"
             for l, rv, ra in zip(lc, raw_player + [raw_player[0]], raw_avg + [raw_avg[0]])
         ],
     ))
@@ -213,18 +213,19 @@ def _radar(player_row, group_df, pos_key, player_name):
     return fig
 
 
-def _percentile_bars(player_row, group_df, pos_key):
+def _percentile_bars(player_row, ref_df, pos_key):
+    """Percentis calculados contra ref_df (scout pool)."""
     config = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
     metrics = config["metrics"]
     labels, pcts, vals = [], [], []
 
     for label, col in metrics.items():
-        if col not in player_row.index or col not in group_df.columns:
+        if col not in player_row.index or col not in ref_df.columns:
             continue
         val = player_row[col]
         if pd.isna(val):
             continue
-        pcts.append(_percentile(val, group_df[col]))
+        pcts.append(_percentile(val, ref_df[col]))
         labels.append(label)
         vals.append(round(float(val), 2))
 
@@ -244,7 +245,7 @@ def _percentile_bars(player_row, group_df, pos_key):
     fig.update_layout(
         paper_bgcolor=BG, plot_bgcolor=BG, height=300,
         margin=dict(l=10, r=20, t=30, b=10),
-        title=dict(text="Percentil no plantel (por posição)", font=dict(color=GOLD, size=13), x=0),
+        title=dict(text="Percentil vs scout (mesma posição)", font=dict(color=GOLD, size=13), x=0),
         xaxis=dict(range=[0, 100], tickfont=dict(color=MUTED), gridcolor=GRID,
                    title=dict(text="Percentil", font=dict(color=MUTED))),
         yaxis=dict(tickfont=dict(color="white", size=11), showgrid=False),
@@ -252,21 +253,21 @@ def _percentile_bars(player_row, group_df, pos_key):
     return fig
 
 
-def _detail_table(player_row, group_df, pos_key):
+def _detail_table(player_row, ref_df, pos_key):
     config = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
     rows = []
     for label, col in config["detail"]:
         p_val = player_row[col] if col in player_row.index else np.nan
-        avg   = group_df[col].mean() if col in group_df.columns else np.nan
+        avg   = ref_df[col].mean() if col in ref_df.columns else np.nan
         rows.append({
-            "Métrica":        label,
-            "Jogador":        round(float(p_val), 2) if not pd.isna(p_val) else "—",
-            "Média Posição":  round(float(avg), 2)   if not pd.isna(avg)   else "—",
+            "Métrica":       label,
+            "Jogador":       round(float(p_val), 2) if not pd.isna(p_val) else "—",
+            "Média Scout":   round(float(avg), 2)   if not pd.isna(avg)   else "—",
         })
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
 
-def render(players):
+def render(players, scout_players=None):
     st.markdown(
         f'<h2 style="color:{GOLD};margin-bottom:4px;">Player Profiles</h2>'
         f'<p style="color:{MUTED};margin-top:0;">Análise individual · FC Porto 2025/26</p>',
@@ -288,7 +289,16 @@ def render(players):
     player_row = ps[ps["player"] == selected].iloc[0]
     pos_group  = _get_position_group(player_row.get("position_group", "Midfielder"))
     pos_key    = _get_pos_key(player_row.get("position", ""), pos_group)
-    same_pos   = ps[ps["position_group"].str.lower() == pos_group.lower()]
+    config     = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
+
+    # Referência de normalização — scout pool da mesma posição
+    if scout_players is not None and not scout_players.empty:
+        ref_df = scout_players[
+            scout_players["position_group"].str.lower() == pos_group.lower()
+        ].copy()
+    else:
+        # Fallback para o plantel se scout não disponível
+        ref_df = ps[ps["position_group"].str.lower() == pos_group.lower()].copy()
 
     with col_info:
         pos   = player_row.get("position", "—")
@@ -310,13 +320,13 @@ def render(players):
 
     col_radar, col_pct = st.columns([1, 1])
     with col_radar:
-        st.plotly_chart(_radar(player_row, same_pos, pos_key, selected), use_container_width=True)
+        st.plotly_chart(_radar(player_row, ref_df, pos_key, selected), use_container_width=True)
     with col_pct:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.plotly_chart(_percentile_bars(player_row, same_pos, pos_key), use_container_width=True)
+        st.plotly_chart(_percentile_bars(player_row, ref_df, pos_key), use_container_width=True)
 
     _section("Stats Detalhadas")
-    _detail_table(player_row, same_pos, pos_key)
+    _detail_table(player_row, ref_df, pos_key)
 
     st.markdown(
         f'<p style="color:{MUTED};font-size:11px;text-align:right;">'

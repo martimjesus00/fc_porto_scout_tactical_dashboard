@@ -45,5 +45,5 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1: tab1_season.render(porto)
 with tab2: tab2_tactical.render(porto, liga_big3)
 with tab3: tab3_context.render(porto, liga_big3)
-with tab4: tab5_players.render(players)
+with tab4: tab5_players.py.render(players, scout)
 with tab5: tab5_scout.render(players, scout)
