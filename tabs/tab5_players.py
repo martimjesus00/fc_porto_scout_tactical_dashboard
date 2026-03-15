@@ -294,7 +294,8 @@ def render(players, scout_players=None):
     # Referência de normalização — scout pool da mesma posição
     if scout_players is not None and not scout_players.empty:
         ref_df = scout_players[
-            scout_players["position_group"].str.lower() == pos_group.lower()
+            (scout_players["position_group"].str.lower() == pos_group.lower()) &
+            (scout_players["minutes"] >= 500)
         ].copy()
     else:
         # Fallback para o plantel se scout não disponível
