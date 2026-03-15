@@ -275,7 +275,7 @@ def render(porto_players, scout_players):
     )
 
     with st.spinner("A calcular similaridade..."):
-        similars = _compute_similarity(porto_row, scout_f, pos_key)
+        similars = _compute_similarity(porto_row, scout_f, pos_key, top_n=10)
 
     if similars.empty:
         st.warning("Sem jogadores suficientes para esta posição.")
@@ -283,30 +283,37 @@ def render(porto_players, scout_players):
 
     st.markdown(
         f'<div style="font-size:14px;font-weight:600;color:{GOLD};margin:16px 0 10px 0;">'
-        f'Top 5 Similares — clica num jogador para comparar</div>',
+        f'Top 10 Similares — clica num jogador para comparar</div>',
         unsafe_allow_html=True,
     )
 
-    cols = st.columns(len(similars))
-    for i, (col, (_, row)) in enumerate(zip(cols, similars.iterrows())):
-        with col:
-            age_str = int(row.get("age", 0)) if not pd.isna(row.get("age", 0)) else "?"
-            min_str = int(row.get("minutes", 0)) if not pd.isna(row.get("minutes", 0)) else "?"
-            st.markdown(
-                f'<div style="background:{CARD_BG};border:1px solid {SIM_COLORS[i]};'
-                f'border-radius:10px;padding:14px 12px;text-align:center;">'
-                f'<div style="font-size:20px;font-weight:700;color:{SIM_COLORS[i]};">#{i+1}</div>'
-                f'<div style="font-size:13px;font-weight:600;color:white;margin:4px 0;">{row.get("player", "?")}</div>'
-                f'<div style="font-size:11px;color:{MUTED};">{row.get("team", "?")}</div>'
-                f'<div style="font-size:11px;color:{MUTED};">{row.get("position", "?")} · {age_str} anos</div>'
-                f'<div style="font-size:11px;color:{MUTED};">{min_str} min</div>'
-                f'<div style="font-size:18px;font-weight:700;color:{SIM_COLORS[i]};margin-top:8px;">'
-                f'{row.get("similarity_pct", 0):.1f}%</div>'
-                f'<div style="font-size:10px;color:{MUTED};">similaridade</div></div>',
-                unsafe_allow_html=True,
-            )
-            if st.button("Ver radar", key=f"sim_btn_{i}"):
-                st.session_state["selected_sim_idx"] = i
+    def _render_card_row(row_similars, offset=0):
+        cols = st.columns(5)
+        for i, (col, (_, row)) in enumerate(zip(cols, row_similars.iterrows())):
+            idx = offset + i
+            color = SIM_COLORS[idx % len(SIM_COLORS)]
+            with col:
+                age_str = int(row.get("age", 0)) if not pd.isna(row.get("age", 0)) else "?"
+                min_str = int(row.get("minutes", 0)) if not pd.isna(row.get("minutes", 0)) else "?"
+                st.markdown(
+                    f'<div style="background:{CARD_BG};border:1px solid {color};'
+                    f'border-radius:10px;padding:14px 12px;text-align:center;">'
+                    f'<div style="font-size:20px;font-weight:700;color:{color};">#{idx+1}</div>'
+                    f'<div style="font-size:13px;font-weight:600;color:white;margin:4px 0;">{row.get("player", "?")}</div>'
+                    f'<div style="font-size:11px;color:{MUTED};">{row.get("team", "?")}</div>'
+                    f'<div style="font-size:11px;color:{MUTED};">{row.get("position", "?")} · {age_str} anos</div>'
+                    f'<div style="font-size:11px;color:{MUTED};">{min_str} min</div>'
+                    f'<div style="font-size:18px;font-weight:700;color:{color};margin-top:8px;">'
+                    f'{row.get("similarity_pct", 0):.1f}%</div>'
+                    f'<div style="font-size:10px;color:{MUTED};">similaridade</div></div>',
+                    unsafe_allow_html=True,
+                )
+                if st.button("Ver radar", key=f"sim_btn_{idx}"):
+                    st.session_state["selected_sim_idx"] = idx
+
+    _render_card_row(similars.iloc[:5], offset=0)
+    st.markdown("<div style='margin-top:10px'></div>", unsafe_allow_html=True)
+    _render_card_row(similars.iloc[5:], offset=5)
 
     sim_idx = st.session_state.get("selected_sim_idx", 0)
     sim_row = similars.iloc[sim_idx]
