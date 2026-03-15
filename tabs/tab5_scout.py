@@ -13,23 +13,100 @@ MUTED = "#8888aa"
 PORTO = "#0033A0"
 SIM_COLORS = ["#FFD700", "#c0c0c0", "#cd7f32", "#4a90d9", "#7b68ee"]
 
-SIM_METRICS = {
-    "Goalkeeper": ["save_pct", "goals_prevented_p90", "sweeper_actions_p90", "aerial_duels_won_pct", "xgc_p90"],
-    "Defender": ["def_actions_p90", "def_duels_won_pct", "aerial_duels_won_pct", "interceptions_p90", "progressive_passes_p90", "long_passes_accurate_pct", "passes_accurate_pct"],
-    "Midfielder": ["progressive_passes_p90", "key_passes_p90", "passes_accurate_pct", "def_actions_p90", "dribbles_p90", "xa_p90", "fwd_passes_p90"],
-    "Forward": ["goals_p90", "xg_p90", "shots_p90", "shots_on_target_pct", "dribbles_p90", "xa_p90", "box_touches_p90"],
+# ── Métricas por posição específica ──────────────────────────
+# Chave = posições Wyscout (qualquer uma que o jogador tenha)
+POSITION_METRICS = {
+    # Guarda-redes
+    "GK": {
+        "metrics": ["save_pct", "goals_prevented_p90", "sweeper_actions_p90", "aerial_duels_won_pct", "xgc_p90"],
+        "labels":  ["Save %", "Goals Prev/90", "Sweeper/90", "Aerial Won%", "xGC/90"],
+        "group":   "Goalkeeper",
+    },
+    # Centrais
+    "CB": {
+        "metrics": ["def_actions_p90", "def_duels_won_pct", "aerial_duels_won_pct", "interceptions_p90", "tackles_p90", "passes_accurate_pct", "long_passes_accurate_pct"],
+        "labels":  ["Def Act/90", "Def Duel%", "Aerial Won%", "Interc/90", "Tackles/90", "Pass Acc%", "Long Pass%"],
+        "group":   "Defender",
+    },
+    # Laterais (esquerdo e direito)
+    "LB": {
+        "metrics": ["def_actions_p90", "def_duels_won_pct", "crosses_p90", "crosses_accurate_pct", "progressive_passes_p90", "xa_p90", "dribbles_p90"],
+        "labels":  ["Def Act/90", "Def Duel%", "Crosses/90", "Cross Acc%", "Prog Pass/90", "xA/90", "Dribbles/90"],
+        "group":   "Defender",
+    },
+    "RB": {
+        "metrics": ["def_actions_p90", "def_duels_won_pct", "crosses_p90", "crosses_accurate_pct", "progressive_passes_p90", "xa_p90", "dribbles_p90"],
+        "labels":  ["Def Act/90", "Def Duel%", "Crosses/90", "Cross Acc%", "Prog Pass/90", "xA/90", "Dribbles/90"],
+        "group":   "Defender",
+    },
+    # Médio defensivo
+    "DMF": {
+        "metrics": ["def_actions_p90", "def_duels_won_pct", "interceptions_p90", "passes_accurate_pct", "progressive_passes_p90", "tackles_p90", "aerial_duels_won_pct"],
+        "labels":  ["Def Act/90", "Def Duel%", "Interc/90", "Pass Acc%", "Prog Pass/90", "Tackles/90", "Aerial%"],
+        "group":   "Midfielder",
+    },
+    # Médio centro
+    "CMF": {
+        "metrics": ["progressive_passes_p90", "key_passes_p90", "passes_accurate_pct", "def_actions_p90", "xa_p90", "dribbles_p90", "final_third_passes_p90"],
+        "labels":  ["Prog Pass/90", "Key Pass/90", "Pass Acc%", "Def Act/90", "xA/90", "Dribbles/90", "F3 Pass/90"],
+        "group":   "Midfielder",
+    },
+    # Médio ofensivo / meia
+    "AMF": {
+        "metrics": ["key_passes_p90", "xa_p90", "xg_p90", "dribbles_p90", "progressive_passes_p90", "box_touches_p90", "shots_p90"],
+        "labels":  ["Key Pass/90", "xA/90", "xG/90", "Dribbles/90", "Prog Pass/90", "Box Touch/90", "Shots/90"],
+        "group":   "Midfielder",
+    },
+    # Extremos
+    "WF": {
+        "metrics": ["goals_p90", "xg_p90", "xa_p90", "dribbles_p90", "crosses_p90", "shots_p90", "progressive_runs_p90"],
+        "labels":  ["Goals/90", "xG/90", "xA/90", "Dribbles/90", "Crosses/90", "Shots/90", "Prog Runs/90"],
+        "group":   "Forward",
+    },
+    # Avançado centro
+    "CF": {
+        "metrics": ["goals_p90", "xg_p90", "shots_p90", "shots_on_target_pct", "aerial_duels_won_pct", "box_touches_p90", "dribbles_p90"],
+        "labels":  ["Goals/90", "xG/90", "Shots/90", "Shot Tgt%", "Aerial Won%", "Box Touch/90", "Dribbles/90"],
+        "group":   "Forward",
+    },
 }
 
-RADAR_LABELS = {
-    "Goalkeeper": ["Save %", "Goals Prev/90", "Sweeper/90", "Aerial Won%", "xGC/90"],
-    "Defender": ["Def Act/90", "Def Duel%", "Aerial%", "Interc/90", "Prog Pass/90", "Long Pass%", "Pass Acc%"],
-    "Midfielder": ["Prog Pass/90", "Key Pass/90", "Pass Acc%", "Def Act/90", "Dribbles/90", "xA/90", "Fwd Pass/90"],
-    "Forward": ["Goals/90", "xG/90", "Shots/90", "Shot Tgt%", "Dribbles/90", "xA/90", "Box Touch/90"],
+# Mapeamento posição Wyscout → chave de métricas
+POSITION_KEY_MAP = {
+    "GK": "GK", "GKP": "GK",
+    "LCB": "CB", "RCB": "CB", "CB": "CB",
+    "LB": "LB", "LWB": "LB",
+    "RB": "RB", "RWB": "RB",
+    "DMF": "DMF", "LDMF": "DMF", "RDMF": "DMF",
+    "CMF": "CMF", "LCMF": "CMF", "RCMF": "CMF",
+    "AMF": "AMF", "LAMF": "AMF", "RAMF": "AMF",
+    "LW": "WF", "RW": "WF", "LWF": "WF", "RWF": "WF",
+    "CF": "CF", "SS": "CF",
+}
+
+# Fallback por grupo se posição não reconhecida
+GROUP_FALLBACK = {
+    "Goalkeeper": "GK",
+    "Defender":   "CB",
+    "Midfielder": "CMF",
+    "Forward":    "CF",
 }
 
 
-def _pos(p):
-    return {"goalkeeper": "Goalkeeper", "defender": "Defender", "midfielder": "Midfielder", "forward": "Forward"}.get(str(p).lower(), "Midfielder")
+def _get_position_key(position_str, position_group):
+    """Determina a chave de métricas pela posição principal do jogador."""
+    positions = [p.strip() for p in str(position_str).split(",")]
+    # Usa a primeira posição reconhecida
+    for pos in positions:
+        if pos in POSITION_KEY_MAP:
+            return POSITION_KEY_MAP[pos]
+    # Fallback por grupo
+    return GROUP_FALLBACK.get(position_group, "CMF")
+
+
+def _pos_group(p):
+    return {"goalkeeper": "Goalkeeper", "defender": "Defender",
+            "midfielder": "Midfielder", "forward": "Forward"}.get(str(p).lower(), "Midfielder")
 
 
 def _hex_rgb(h):
@@ -37,17 +114,22 @@ def _hex_rgb(h):
     return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
 
-def _compute_similarity(porto_row, scout_df, pos_group, top_n=5):
-    metrics = [m for m in SIM_METRICS.get(pos_group, []) if m in porto_row.index and m in scout_df.columns]
+def _compute_similarity(porto_row, scout_df, pos_key, top_n=5):
+    config = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
+    metrics = [m for m in config["metrics"] if m in porto_row.index and m in scout_df.columns]
     if not metrics:
         return pd.DataFrame()
 
+    # Filtrar scout pelo grupo de posição
+    pos_group = config["group"]
+    pool = scout_df[scout_df["position_group"].str.lower() == pos_group.lower()].copy()
+
+    # Filtrar por posição específica
     porto_positions = [p.strip() for p in str(porto_row.get("position", "")).split(",")]
 
     def has_overlap(pos_str):
         return any(p in [x.strip() for x in str(pos_str).split(",")] for p in porto_positions)
 
-    pool = scout_df[scout_df["position_group"].str.lower() == pos_group.lower()].copy()
     specific = pool[pool["position"].apply(has_overlap)]
     if len(specific) >= 10:
         pool = specific
@@ -68,9 +150,10 @@ def _compute_similarity(porto_row, scout_df, pos_group, top_n=5):
     return top
 
 
-def _radar_single(porto_row, sim_row, pos_group, porto_name, sim_color, scout_pool=None):
-    metrics = SIM_METRICS.get(pos_group, [])
-    labels = RADAR_LABELS.get(pos_group, metrics)
+def _radar_single(porto_row, sim_row, pos_key, porto_name, sim_color, scout_pool=None):
+    config = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
+    metrics = config["metrics"]
+    labels = config["labels"]
     am = [m for m in metrics if m in porto_row.index and m in sim_row.index]
     al = [labels[i] for i, m in enumerate(metrics) if m in am]
     if not am:
@@ -80,7 +163,8 @@ def _radar_single(porto_row, sim_row, pos_group, porto_name, sim_color, scout_po
     sv = [float(sim_row[m]) if not pd.isna(sim_row[m]) else 0 for m in am]
 
     if scout_pool is not None and len(scout_pool) > 2:
-        pool_vals = scout_pool[am].fillna(0).values
+        avail = [m for m in am if m in scout_pool.columns]
+        pool_vals = scout_pool[avail].fillna(0).values
         mn = np.nanmin(pool_vals, axis=0)
         mx = np.nanmax(pool_vals, axis=0)
     else:
@@ -102,7 +186,9 @@ def _radar_single(porto_row, sim_row, pos_group, porto_name, sim_color, scout_po
         line=dict(color=sim_color, width=2.5),
         name=f"{sim_row.get('player', '?')} ({sim_row.get('team', '?')})",
         hovertemplate=[
-            f"<b>{l}</b><br>{sim_row.get('player', '?')}: {round(float(sim_row[m]), 2) if m in sim_row.index and not pd.isna(sim_row[m]) else chr(8212)}<extra></extra>"
+            f"<b>{l}</b><br>{sim_row.get('player', '?')}: "
+            f"{round(float(sim_row[m]), 2) if m in sim_row.index and not pd.isna(sim_row[m]) else chr(8212)}"
+            f"<extra></extra>"
             for l, m in zip(lc, [*am, am[0]])
         ]
     ))
@@ -112,7 +198,9 @@ def _radar_single(porto_row, sim_row, pos_group, porto_name, sim_color, scout_po
         line=dict(color=PORTO, width=2.5),
         name=porto_name,
         hovertemplate=[
-            f"<b>{l}</b><br>{porto_name}: {round(float(porto_row[m]), 2) if m in porto_row.index and not pd.isna(porto_row[m]) else chr(8212)}<extra></extra>"
+            f"<b>{l}</b><br>{porto_name}: "
+            f"{round(float(porto_row[m]), 2) if m in porto_row.index and not pd.isna(porto_row[m]) else chr(8212)}"
+            f"<extra></extra>"
             for l, m in zip(lc, [*am, am[0]])
         ]
     ))
@@ -124,15 +212,18 @@ def _radar_single(porto_row, sim_row, pos_group, porto_name, sim_color, scout_po
         ),
         paper_bgcolor=BG, height=450,
         margin=dict(l=60, r=60, t=50, b=40),
-        legend=dict(font=dict(color="white", size=12), bgcolor=CARD_BG, bordercolor=GRID, orientation="h", x=0.2, y=-0.1),
-        title=dict(text=f"{porto_name}  vs  {sim_row.get('player', '?')}", font=dict(color=GOLD, size=14), x=0.5, xanchor="center"),
+        legend=dict(font=dict(color="white", size=12), bgcolor=CARD_BG, bordercolor=GRID,
+                    orientation="h", x=0.2, y=-0.1),
+        title=dict(text=f"{porto_name}  vs  {sim_row.get('player', '?')}",
+                   font=dict(color=GOLD, size=14), x=0.5, xanchor="center"),
     )
     return fig
 
 
-def _table(porto_row, similars, pos_group, porto_name):
-    metrics = SIM_METRICS.get(pos_group, [])
-    labels = RADAR_LABELS.get(pos_group, metrics)
+def _table(porto_row, similars, pos_key, porto_name):
+    config = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
+    metrics = config["metrics"]
+    labels = config["labels"]
     am = [m for m in metrics if m in porto_row.index and m in similars.columns]
     al = [labels[i] for i, m in enumerate(metrics) if m in am]
     rows = {
@@ -157,7 +248,9 @@ def render(porto_players, scout_players):
         return
 
     ps = porto_players.copy()
-    ps["_ord"] = ps["position_group"].map({"Goalkeeper": 0, "Defender": 1, "Midfielder": 2, "Forward": 3}).fillna(9)
+    ps["_ord"] = ps["position_group"].map(
+        {"Goalkeeper": 0, "Defender": 1, "Midfielder": 2, "Forward": 3}
+    ).fillna(9)
     ps = ps.sort_values(["_ord", "player"]).reset_index(drop=True)
     ps_min = ps[ps["minutes"] >= 200] if "minutes" in ps.columns else ps
 
@@ -168,20 +261,24 @@ def render(porto_players, scout_players):
         min_min = st.slider("Minutos mínimos (scout)", 300, 1500, 500, 100, key="tab5s_min")
 
     porto_row = ps_min[ps_min["player"] == selected].iloc[0]
-    pos_group = _pos(porto_row.get("position_group", "Midfielder"))
+    pos_group = _pos_group(porto_row.get("position_group", "Midfielder"))
+    pos_key = _get_position_key(porto_row.get("position", ""), pos_group)
+    config = POSITION_METRICS.get(pos_key, POSITION_METRICS["CMF"])
     scout_f = scout_players[scout_players["minutes"] >= min_min].copy()
 
     st.markdown(
         f'<p style="color:{MUTED};font-size:12px;margin-bottom:16px;">'
-        f'{selected} · {porto_row.get("position", "?")} · {pos_group} · {int(porto_row.get("minutes", 0))} min</p>',
+        f'{selected} · {porto_row.get("position", "?")} · {pos_group} · '
+        f'{int(porto_row.get("minutes", 0))} min · '
+        f'<span style="color:{GOLD};">métricas: {config["group"]} ({pos_key})</span></p>',
         unsafe_allow_html=True,
     )
 
     with st.spinner("A calcular similaridade..."):
-        similars = _compute_similarity(porto_row, scout_f, pos_group)
+        similars = _compute_similarity(porto_row, scout_f, pos_key)
 
     if similars.empty:
-        st.warning("Sem jogadores suficientes.")
+        st.warning("Sem jogadores suficientes para esta posição.")
         return
 
     st.markdown(
@@ -196,8 +293,8 @@ def render(porto_players, scout_players):
             age_str = int(row.get("age", 0)) if not pd.isna(row.get("age", 0)) else "?"
             min_str = int(row.get("minutes", 0)) if not pd.isna(row.get("minutes", 0)) else "?"
             st.markdown(
-                f'<div style="background:{CARD_BG};border:1px solid {SIM_COLORS[i]};border-radius:10px;'
-                f'padding:14px 12px;text-align:center;">'
+                f'<div style="background:{CARD_BG};border:1px solid {SIM_COLORS[i]};'
+                f'border-radius:10px;padding:14px 12px;text-align:center;">'
                 f'<div style="font-size:20px;font-weight:700;color:{SIM_COLORS[i]};">#{i+1}</div>'
                 f'<div style="font-size:13px;font-weight:600;color:white;margin:4px 0;">{row.get("player", "?")}</div>'
                 f'<div style="font-size:11px;color:{MUTED};">{row.get("team", "?")}</div>'
@@ -223,9 +320,9 @@ def render(porto_players, scout_players):
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-    scout_pool = scout_f[scout_f["position_group"].str.lower() == pos_group.lower()]
+    scout_pool = scout_f[scout_f["position_group"].str.lower() == config["group"].lower()]
     st.plotly_chart(
-        _radar_single(porto_row, sim_row, pos_group, selected, sim_color, scout_pool=scout_pool),
+        _radar_single(porto_row, sim_row, pos_key, selected, sim_color, scout_pool=scout_pool),
         use_container_width=True,
     )
 
@@ -234,7 +331,7 @@ def render(porto_players, scout_players):
         f'Comparação de Métricas</div>',
         unsafe_allow_html=True,
     )
-    _table(porto_row, similars, pos_group, selected)
+    _table(porto_row, similars, pos_key, selected)
 
     st.markdown(
         f'<p style="color:{MUTED};font-size:11px;text-align:right;">'
