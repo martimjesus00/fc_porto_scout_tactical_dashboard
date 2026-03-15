@@ -30,7 +30,19 @@ def _hex_rgb(h): h=h.lstrip("#"); return tuple(int(h[i:i+2],16) for i in (0,2,4)
 def _compute_similarity(porto_row, scout_df, pos_group, top_n=5):
     metrics=[m for m in SIM_METRICS.get(pos_group,[]) if m in porto_row.index and m in scout_df.columns]
     if not metrics: return pd.DataFrame()
-    pool=scout_df[scout_df["position_group"].str.lower()==pos_group.lower()].dropna(subset=metrics,thresh=len(metrics)//2)
+    porto_positions = [p.strip() for p in str(porto_row.get("position","")).split(",")]
+
+def has_position_overlap(pos_str):
+    scout_positions = [p.strip() for p in str(pos_str).split(",")]
+    return any(p in scout_positions for p in porto_positions)
+
+pool = scout_df[scout_df["position_group"].str.lower()==pos_group.lower()].copy()
+pool = pool[pool["position"].apply(has_position_overlap)]
+
+if len(pool) < 10:
+    pool = scout_df[scout_df["position_group"].str.lower()==pos_group.lower()].copy()
+
+pool = pool.dropna(subset=metrics, thresh=len(metrics)//2)
     if pool.empty: return pd.DataFrame()
     pv=pd.DataFrame([porto_row[metrics].values],columns=metrics)
     all_v=pd.concat([pv,pool[metrics]],ignore_index=True)
