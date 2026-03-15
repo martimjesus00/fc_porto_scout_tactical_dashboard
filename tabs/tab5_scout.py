@@ -24,34 +24,34 @@ RADAR_LABELS={
     "Forward":["Goals/90","xG/90","Shots/90","Shot Tgt%","Dribbles/90","xA/90","Box Touch/90"],
 }
 
-def _pos(p): return {"goalkeeper":"Goalkeeper","defender":"Defender","midfielder":"Midfielder","forward":"Forward"}.get(str(p).lower(),"Midfielder")
-def _hex_rgb(h): h=h.lstrip("#"); return tuple(int(h[i:i+2],16) for i in (0,2,4))
+    def _pos(p): return {"goalkeeper":"Goalkeeper","defender":"Defender","midfielder":"Midfielder","forward":"Forward"}.get(str(p).lower(),"Midfielder")
+    def _hex_rgb(h): h=h.lstrip("#"); return tuple(int(h[i:i+2],16) for i in (0,2,4))
 
-def _compute_similarity(porto_row, scout_df, pos_group, top_n=5):
-    metrics=[m for m in SIM_METRICS.get(pos_group,[]) if m in porto_row.index and m in scout_df.columns]
-    if not metrics: return pd.DataFrame()
-    porto_positions = [p.strip() for p in str(porto_row.get("position","")).split(",")]
+    def _compute_similarity(porto_row, scout_df, pos_group, top_n=5):
+        metrics=[m for m in SIM_METRICS.get(pos_group,[]) if m in porto_row.index and m in scout_df.columns]
+        if not metrics: return pd.DataFrame()
+        porto_positions = [p.strip() for p in str(porto_row.get("position","")).split(",")]
 
-def has_position_overlap(pos_str):
-    scout_positions = [p.strip() for p in str(pos_str).split(",")]
-    return any(p in scout_positions for p in porto_positions)
+    def has_position_overlap(pos_str):
+        scout_positions = [p.strip() for p in str(pos_str).split(",")]
+        return any(p in scout_positions for p in porto_positions)
 
-pool = scout_df[scout_df["position_group"].str.lower()==pos_group.lower()].copy()
-pool = pool[pool["position"].apply(has_position_overlap)]
-
-if len(pool) < 10:
     pool = scout_df[scout_df["position_group"].str.lower()==pos_group.lower()].copy()
+    pool = pool[pool["position"].apply(has_position_overlap)]
 
-pool = pool.dropna(subset=metrics, thresh=len(metrics)//2)
-    if pool.empty: return pd.DataFrame()
-    pv=pd.DataFrame([porto_row[metrics].values],columns=metrics)
-    all_v=pd.concat([pv,pool[metrics]],ignore_index=True)
-    scaled=MinMaxScaler().fit_transform(all_v.fillna(0))
-    sims=cosine_similarity(scaled[0:1],scaled[1:])[0]
-    pool=pool.copy(); pool["similarity"]=sims; pool["similarity_pct"]=(sims*100).round(1)
-    top=pool.nlargest(top_n,"similarity").reset_index(drop=True)
-    top["rank"]=range(1,len(top)+1)
-    return top
+    if len(pool) < 10:
+        pool = scout_df[scout_df["position_group"].str.lower()==pos_group.lower()].copy()
+
+    pool = pool.dropna(subset=metrics, thresh=len(metrics)//2)
+        if pool.empty: return pd.DataFrame()
+        pv=pd.DataFrame([porto_row[metrics].values],columns=metrics)
+        all_v=pd.concat([pv,pool[metrics]],ignore_index=True)
+        scaled=MinMaxScaler().fit_transform(all_v.fillna(0))
+        sims=cosine_similarity(scaled[0:1],scaled[1:])[0]
+        pool=pool.copy(); pool["similarity"]=sims; pool["similarity_pct"]=(sims*100).round(1)
+        top=pool.nlargest(top_n,"similarity").reset_index(drop=True)
+        top["rank"]=range(1,len(top)+1)
+        return top
 
 def _radar(porto_row, similars, pos_group, porto_name):
     metrics=SIM_METRICS.get(pos_group,[]); labels=RADAR_LABELS.get(pos_group,metrics)
