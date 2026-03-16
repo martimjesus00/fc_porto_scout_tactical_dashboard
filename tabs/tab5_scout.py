@@ -11,7 +11,7 @@ GOLD = "#FFD700"
 GRID = "#1e1e3a"
 MUTED = "#8888aa"
 PORTO = "#0033A0"
-SIM_COLORS = ["#FFD700", "#c0c0c0", "#cd7f32", "#4a90d9", "#7b68ee"]
+SIM_COLORS = ["#FFD700", "#c0c0c0", "#cd7f32", "#4a90d9", "#7b68ee", "#e74c3c", "#2ecc71", "#e67e22", "#1abc9c", "#9b59b6"]
 
 # ── Métricas por posição específica ──────────────────────────
 # Chave = posições Wyscout (qualquer uma que o jogador tenha)
@@ -324,7 +324,7 @@ def render(porto_players, scout_players):
 
     sim_idx = st.session_state.get("selected_sim_idx", 0)
     sim_row = similars.iloc[sim_idx]
-    sim_color = SIM_COLORS[sim_idx]
+    sim_color = SIM_COLORS[sim_idx % len(SIM_COLORS)]
 
     st.markdown(
         f'<div style="font-size:13px;color:{MUTED};margin:16px 0 8px 0;">'
